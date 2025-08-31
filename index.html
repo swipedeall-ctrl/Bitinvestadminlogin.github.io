@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BitInvest Pro - Admin Panel</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1f4b 0%, #0c0e2a 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background: #0c0e2a;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .admin-logo {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #2a2f5d;
+        }
+        
+        .admin-logo h1 {
+            color: #4cc2ff;
+            font-size: 24px;
+        }
+        
+        .admin-logo p {
+            color: #9aa1bf;
+            font-size: 12px;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-menu li {
+            margin-bottom: 10px;
+        }
+        
+        .nav-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: #9aa1bf;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .nav-menu a:hover, .nav-menu a.active {
+            background: #4cc2ff;
+            color: #0c0e2a;
+        }
+        
+        .nav-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #2a2f5d;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #1a1f4b;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #2a2f5d;
+        }
+        
+        .stat-card h3 {
+            color: #9aa1bf;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4cc2ff;
+        }
+        
+        .stat-profit {
+            color: #2ecc71;
+        }
+        
+        .stat-loss {
+            color: #e74c3c;
+        }
+        
+        .data-section {
+            background: #1a1f4b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #2a2f5d;
+        }
+        
+        .section-header h2 {
+            color: #4cc2ff;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filters input, .filters select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #363c74;
+            background: #252b5c;
+            color: #fff;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #2a2f5d;
+        }
+        
+        table th {
+            color: #4cc2ff;
+            font-weight: 600;
+        }
+        
+        table td {
+            color: #9aa1bf;
+        }
+        
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: #f7931a;
+            color: #0c0e2a;
+        }
+        
+        .status-success {
+            background: #2ecc71;
+            color: #0c0e2a;
+        }
+        
+        .status-failed {
+            background: #e74c3c;
+            color: #fff;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #4cc2ff;
+            color: #0c0e2a;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: #fff;
+        }
+        
+        .btn-success {
+            background: #2ecc71;
+            color: #0c0e2a;
+        }
+        
+        .btn-secondary {
+            background: #9aa1bf;
+            color: #0c0e2a;
+        }
+        
+        .btn-warning {
+            background: #f7931a;
+            color: #0c0e2a;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: #1a1f4b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .login-container h2 {
+            text-align: center;
+            color: #4cc2ff;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #9aa1bf;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #363c74;
+            background: #252b5c;
+            color: #fff;
+        }
+        
+        .btn-login {
+            background: #4cc2ff;
+            color: #0c0e2a;
+            width: 100%;
+            padding: 12px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: #1a1f4b;
+            padding: 30px;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #2a2f5d;
+        }
+        
+        .modal-header h2 {
+            color: #4cc2ff;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #9aa1bf;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .config-card {
+            background: #252b5c;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .config-card:hover {
+            transform: translateY(-5px);
+            border-color: #4cc2ff;
+        }
+        
+        .config-card i {
+            font-size: 36px;
+            color: #4cc2ff;
+            margin-bottom: 15px;
+        }
+        
+        .config-card h3 {
+            color: #f7931a;
+            margin-bottom: 10px;
+        }
+        
+        .user-details {
+            background: #252b5c;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .user-details h3 {
+            color: #4cc2ff;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2f5d;
+        }
+        
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .user-info-item {
+            background: #1a1f4b;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .user-info-item label {
+            display: block;
+            color: #9aa1bf;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .user-info-item span {
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        .login-as-user {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #2a2f5d;
+        }
+        
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 2px solid #fff;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 10px;
+            }
+            
+            .stats-grid, .config-grid, .user-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loginPage" class="login-container">
+        <h2>Admin Login</h2>
+        <div class="form-group">
+            <label for="adminUsername">Username</label>
+            <input type="text" id="adminUsername" placeholder="Enter admin username">
+        </div>
+        <div class="form-group">
+            <label for="adminPassword">Password</label>
+            <input type="password" id="adminPassword" placeholder="Enter admin password">
+        </div>
+        <button class="btn btn-login" onclick="adminLogin()">Login</button>
+    </div>
+
+    <div id="adminPanel" class="admin-container" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="admin-logo">
+                <h1>BitInvest Pro</h1>
+                <p>Admin Panel</p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" class="active" onclick="showSection('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#" onclick="showSection('users')"><i class="fas fa-users"></i> Users</a></li>
+                <li><a href="#" onclick="showSection('investments')"><i class="fas fa-chart-line"></i> Investments</a></li>
+                <li><a href="#" onclick="showSection('withdrawals')"><i class="fas fa-money-bill-wave"></i> Withdrawals</a></li>
+                <li><a href="#" onclick="showSection('config')"><i class="fas fa-cog"></i> Configuration</a></li>
+                <li><a href="#" onclick="showSection('activities')"><i class="fas fa-history"></i> Activities</a></li>
+                <li><a href="#" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="content-section">
+                <div class="header">
+                    <h1>Dashboard Overview</h1>
+                    <div id="currentTime"></div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <div class="stat-value" id="totalUsers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Investments</h3>
+                        <div class="stat-value">₹<span id="totalInvestments">0</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Withdrawals</h3>
+                        <div class="stat-value">₹<span id="totalWithdrawals">0</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Profit</h3>
+                        <div class="stat-value stat-profit">₹<span id="totalProfit">0</span></div>
+                    </div>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Recent Activities</h2>
+                    </div>
+                    <div class="filters">
+                        <input type="date" id="activityDateFilter">
+                        <select id="activityTypeFilter">
+                            <option value="all">All Activities</option>
+                            <option value="login">Logins</option>
+                            <option value="investment">Investments</option>
+                            <option value="withdrawal">Withdrawals</option>
+                        </select>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Activity</th>
+                                    <th>Details</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivitiesTable">
+                                <!-- Activities will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="usersSection" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1>User Management</h1>
+                    <button class="btn btn-primary" onclick="showAddUserModal()"><i class="fas fa-plus"></i> Add New User</button>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>All Users</h2>
+                        <input type="text" id="userSearch" placeholder="Search users..." oninput="filterUsers()">
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Mobile Number</th>
+                                    <th>Registration Date</th>
+                                    <th>Total Invested</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable">
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- User Details Section (hidden by default) -->
+                <div id="userDetailsSection" style="display: none;">
+                    <div class="header">
+                        <h1>User Details</h1>
+                        <button class="btn btn-secondary" onclick="backToUsersList()"><i class="fas fa-arrow-left"></i> Back to Users</button>
+                    </div>
+
+                    <div class="user-details">
+                        <h3>Basic Information</h3>
+                        <div class="user-info-grid">
+                            <div class="user-info-item">
+                                <label>User ID</label>
+                                <span id="detailUserId"></span>
+                            </div>
+                            <div class="user-info-item">
+                                <label>Mobile Number</label>
+                                <span id="detailMobile"></span>
+                            </div>
+                            <div class="user-info-item">
+                                <label>Registration Date</label>
+                                <span id="detailRegDate"></span>
+                            </div>
+                            <div class="user-info-item">
+                                <label>Password</label>
+                                <span id="detailPassword"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="user-details">
+                        <h3>Investment History</h3>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Amount</th>
+                                        <th>Expected Profit</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userInvestmentsTable">
+                                    <!-- User investments will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="user-details">
+                        <h3>Withdrawal History</h3>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userWithdrawalsTable">
+                                    <!-- User withdrawals will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="login-as-user">
+                        <button class="btn btn-warning" onclick="loginAsUser()"><i class="fas fa-sign-in-alt"></i> Login as this User</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investments Section -->
+            <div id="investmentsSection" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1>Investment Management</h1>
+                    <button class="btn btn-primary" onclick="showAddPlanModal()"><i class="fas fa-plus"></i> Add New Plan</button>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>All Investments</h2>
+                        <div>
+                            <input type="date" id="investmentDateFilter">
+                            <select id="investmentStatusFilter">
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="success">Success</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Amount</th>
+                                    <th>Expected Profit</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investmentsTable">
+                                <!-- Investments will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Investment Plans</h2>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Plan Name</th>
+                                    <th>Amount</th>
+                                    <th>Profit</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="plansTable">
+                                <!-- Plans will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Withdrawals Section -->
+            <div id="withdrawalsSection" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1>Withdrawal Management</h1>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>All Withdrawals</h2>
+                        <div>
+                            <input type="date" id="withdrawalDateFilter">
+                            <select id="withdrawalStatusFilter">
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processed">Processed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawalsTable">
+                                <!-- Withdrawals will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div id="configSection" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1>Website Configuration</h1>
+                </div>
+
+                <div class="config-grid">
+                    <div class="config-card" onclick="showQrConfigModal()">
+                        <i class="fas fa-qrcode"></i>
+                        <h3>QR Code</h3>
+                        <p>Update payment QR code</p>
+                    </div>
+                    
+                    <div class="config-card" onclick="showWhatsappConfigModal()">
+                        <i class="fab fa-whatsapp"></i>
+                        <h3>WhatsApp Links</h3>
+                        <p>Update WhatsApp contact links</p>
+                    </div>
+                    
+                    <div class="config-card" onclick="showTaxConfigModal()">
+                        <i class="fas fa-percentage"></i>
+                        <h3>Tax Settings</h3>
+                        <p>Configure tax percentage</p>
+                    </div>
+                    
+                    <div class="config-card" onclick="showGeneralConfigModal()">
+                        <i class="fas fa-cogs"></i>
+                        <h3>General Settings</h3>
+                        <p>Update website appearance</p>
+                    </div>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Current Configuration</h2>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Setting</th>
+                                    <th>Value</th>
+                                    <th>Last Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody id="configTable">
+                                <!-- Configuration will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activities Section -->
+            <div id="activitiesSection" class="content-section" style="display: none;">
+                <div class="header">
+                    <h1>Activity Logs</h1>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>All Activities</h2>
+                        <div>
+                            <input type="date" id="allActivityDateFilter">
+                            <select id="allActivityTypeFilter">
+                                <option value="all">All Activities</option>
+                                <option value="login">Logins</option>
+                                <option value="investment">Investments</option>
+                                <option value="withdrawal">Withdrawals</option>
+                                <option value="deposit">Deposits</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Activity Type</th>
+                                    <th>Details</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allActivitiesTable">
+                                <!-- All activities will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="close-modal" onclick="closeModal('addUserModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="newUserMobile">Mobile Number</label>
+                <input type="text" id="newUserMobile" placeholder="Enter mobile number">
+            </div>
+            <div class="form-group">
+                <label for="newUserId">User ID (Auto-generated)</label>
+                <input type="text" id="newUserId" readonly>
+            </div>
+            <div class="form-group">
+                <label for="newUserPassword">Password (Auto-generated)</label>
+                <input type="text" id="newUserPassword" readonly>
+            </div>
+            <button class="btn btn-success" onclick="addNewUser()">Create User</button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Plan Modal -->
+    <div id="planModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="planModalTitle">Add New Investment Plan</h2>
+                <button class="close-modal" onclick="closeModal('planModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="planName">Plan Name</label>
+                <input type="text" id="planName" placeholder="Enter plan name">
+            </div>
+            <div class="form-group">
+                <label for="planAmount">Plan Amount (₹)</label>
+                <input type="number" id="planAmount" placeholder="Enter amount">
+            </div>
+            <div class="form-group">
+                <label for="planProfit">Expected Profit (₹)</label>
+                <input type="number" id="planProfit" placeholder="Enter profit">
+            </div>
+            <button class="btn btn-success" onclick="savePlan()">Save Plan</button>
+        </div>
+    </div>
+
+    <!-- QR Config Modal -->
+    <div id="qrConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update QR Code</h2>
+                <button class="close-modal" onclick="closeModal('qrConfigModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="qrCodeUrl">QR Code Image URL</label>
+                <input type="text" id="qrCodeUrl" placeholder="Enter image URL">
+            </div>
+            <div class="form-group">
+                <label for="qrCodeDescription">Description</label>
+                <input type="text" id="qrCodeDescription" placeholder="Enter description">
+            </div>
+            <button class="btn btn-success" onclick="updateQrCode()">Update QR Code</button>
+        </div>
+    </div>
+
+    <!-- WhatsApp Config Modal -->
+    <div id="whatsappConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update WhatsApp Links</h2>
+                <button class="close-modal" onclick="closeModal('whatsappConfigModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="whatsappDeposit">Deposit WhatsApp Link</label>
+                <input type="text" id="whatsappDeposit" placeholder="Enter WhatsApp link for deposits">
+            </div>
+            <div class="form-group">
+                <label for="whatsappWithdrawal">Withdrawal WhatsApp Link</label>
+                <input type="text" id="whatsappWithdrawal" placeholder="Enter WhatsApp link for withdrawals">
+            </div>
+            <div class="form-group">
+                <label for="whatsappSupport">Support WhatsApp Link</label>
+                <input type="text" id="whatsappSupport" placeholder="Enter WhatsApp link for support">
+            </div>
+            <button class="btn btn-success" onclick="updateWhatsappLinks()">Update WhatsApp Links</button>
+        </div>
+    </div>
+
+    <!-- Tax Config Modal -->
+    <div id="taxConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Tax Settings</h2>
+                <button class="close-modal" onclick="closeModal('taxConfigModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="taxPercentage">Tax Percentage (%)</label>
+                <input type="number" id="taxPercentage" placeholder="Enter tax percentage" min="0" max="100" step="0.1">
+            </div>
+            <button class="btn btn-success" onclick="updateTaxSettings()">Update Tax Settings</button>
+        </div>
+    </div>
+
+    <!-- General Config Modal -->
+    <div id="generalConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update General Settings</h2>
+                <button class="close-modal" onclick="closeModal('generalConfigModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="websiteName">Website Name</label>
+                <input type="text" id="websiteName" placeholder="Enter website name">
+            </div>
+            <div class="form-group">
+                <label for="primaryColor">Primary Color</label>
+                <div class="color-picker">
+                    <input type="color" id="primaryColor">
+                    <div class="color-preview" id="primaryColorPreview"></div>
+                    <span id="primaryColorValue">#4cc2ff</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="secondaryColor">Secondary Color</label>
+                <div class="color-picker">
+                    <input type="color" id="secondaryColor">
+                    <div class="color-preview" id="secondaryColorPreview"></div>
+                    <span id="secondaryColorValue">#f7931a</span>
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="updateGeneralSettings()">Update Settings</button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAszG9js_6QEA1lar8QvVJp5dkZHIt_QTQ",
+            authDomain: "bitinvestpro-a18c1.firebaseapp.com",
+            databaseURL: "https://bitinvestpro-a18c1-default-rtdb.firebaseio.com",
+            projectId: "bitinvestpro-a18c1",
+            storageBucket: "bitinvestpro-a18c1.firebasestorage.app",
+            messagingSenderId: "452364425763",
+            appId: "1:452364425763:web:723959fb51e033f594af96",
+            measurementId: "G-WNDZWMKX3T"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Admin credentials
+        const ADMIN_CREDENTIALS = {
+            username: "admin",
+            password: "admin123"
+        };
+        
+        // Global variables
+        let currentEditingPlanId = null;
+        let currentViewingUserId = null;
+        
+        // Check if admin is already logged in
+        function checkAdminLogin() {
+            if (localStorage.getItem('adminLoggedIn') === 'true') {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'flex';
+                loadDashboardData();
+            }
+        }
+        
+        // Admin login function
+        function adminLogin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'flex';
+                loadDashboardData();
+            } else {
+                alert('Invalid admin credentials!');
+            }
+        }
+        
+        // Admin logout function
+        function adminLogout() {
+            localStorage.removeItem('adminLoggedIn');
+            document.getElementById('loginPage').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+        
+        // Show specific section
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + 'Section').style.display = 'block';
+            
+            // Load section data
+            if (sectionName === 'dashboard') {
+                loadDashboardData();
+            } else if (sectionName === 'users') {
+                loadUsersData();
+            } else if (sectionName === 'investments') {
+                loadInvestmentsData();
+                loadPlansData();
+            } else if (sectionName === 'withdrawals') {
+                loadWithdrawalsData();
+            } else if (sectionName === 'config') {
+                loadConfigData();
+            } else if (sectionName === 'activities') {
+                loadActivitiesData();
+            }
+            
+            // Update active menu
+            document.querySelectorAll('.nav-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        // Load dashboard data
+        function loadDashboardData() {
+            // Update current time
+            document.getElementById('currentTime').textContent = new Date().toLocaleString();
+            
+            // Load stats
+            loadStats();
+            
+            // Load recent activities
+            loadRecentActivities();
+        }
+        
+        // Load statistics
+        function loadStats() {
+            const usersRef = database.ref('users');
+            const investmentsRef = database.ref('investments');
+            const withdrawalsRef = database.ref('withdrawals');
+            
+            // Count total users
+            usersRef.once('value', (snapshot) => {
+                const userCount = snapshot.numChildren();
+                document.getElementById('totalUsers').textContent = userCount;
+            });
+            
+            // Calculate total investments
+            investmentsRef.once('value', (snapshot) => {
+                let totalInvested = 0;
+                snapshot.forEach((childSnapshot) => {
+                    childSnapshot.forEach((investment) => {
+                        totalInvested += parseInt(investment.val().amount) || 0;
+                    });
+                });
+                document.getElementById('totalInvestments').textContent = totalInvested;
+            });
+            
+            // Calculate total withdrawals
+            withdrawalsRef.once('value', (snapshot) => {
+                let totalWithdrawn = 0;
+                snapshot.forEach((childSnapshot) => {
+                    childSnapshot.forEach((withdrawal) => {
+                        if (withdrawal.val().status === 'processed') {
+                            totalWithdrawn += parseInt(withdrawal.val().amount) || 0;
+                        }
+                    });
+                });
+                document.getElementById('totalWithdrawals').textContent = totalWithdrawn;
+                
+                // Calculate profit (investments - withdrawals)
+                const totalInvested = parseInt(document.getElementById('totalInvestments').textContent);
+                const profit = totalInvested - totalWithdrawn;
+                document.getElementById('totalProfit').textContent = profit;
+            });
+        }
+        
+        // Load recent activities
+        function loadRecentActivities() {
+            const activitiesRef = database.ref('userActivities');
+            const tableBody = document.getElementById('recentActivitiesTable');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading activities...</td></tr>';
+            
+            activitiesRef.limitToLast(10).once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No activities found</td></tr>';
+                    return;
+                }
+                
+                const activities = [];
+                snapshot.forEach((userSnapshot) => {
+                    userSnapshot.forEach((activitySnapshot) => {
+                        activities.push({
+                            userId: userSnapshot.key,
+                            ...activitySnapshot.val()
+                        });
+                    });
+                });
+                
+                // Sort by timestamp (newest first)
+                activities.sort((a, b) => b.timestamp - a.timestamp);
+                
+                // Display last 10 activities
+                activities.slice(0, 10).forEach(activity => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${activity.userId}</td>
+                        <td>${activity.type}</td>
+                        <td>${JSON.stringify(activity.details || {})}</td>
+                        <td>${new Date(activity.timestamp).toLocaleString()}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Load users data
+        function loadUsersData() {
+            const usersRef = database.ref('users');
+            const tableBody = document.getElementById('usersTable');
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading users...</td></tr>';
+            
+            usersRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No users found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach((userSnapshot) => {
+                    const user = userSnapshot.val();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${userSnapshot.key}</td>
+                        <td>${user.mobileNumber || 'N/A'}</td>
+                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>₹0</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="viewUserDetails('${userSnapshot.key}')">View</button>
+                            <button class="btn btn-danger" onclick="deleteUser('${userSnapshot.key}')">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Filter users based on search input
+        function filterUsers() {
+            const searchValue = document.getElementById('userSearch').value.toLowerCase();
+            const rows = document.getElementById('usersTable').getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const userId = rows[i].getElementsByTagName('td')[0]?.textContent.toLowerCase() || '';
+                const mobile = rows[i].getElementsByTagName('td')[1]?.textContent.toLowerCase() || '';
+                
+                if (userId.includes(searchValue) || mobile.includes(searchValue)) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+        
+        // View user details
+        function viewUserDetails(userId) {
+            currentViewingUserId = userId;
+            const userRef = database.ref('users/' + userId);
+            
+            userRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const user = snapshot.val();
+                    
+                    // Fill user details
+                    document.getElementById('detailUserId').textContent = userId;
+                    document.getElementById('detailMobile').textContent = user.mobileNumber || 'N/A';
+                    document.getElementById('detailRegDate').textContent = new Date(user.createdAt).toLocaleString();
+                    document.getElementById('detailPassword').textContent = user.credentials?.password || 'N/A';
+                    
+                    // Load user investments
+                    loadUserInvestments(userId);
+                    
+                    // Load user withdrawals
+                    loadUserWithdrawals(userId);
+                    
+                    // Show user details section, hide users list
+                    document.getElementById('usersTable').closest('.data-section').style.display = 'none';
+                    document.getElementById('userDetailsSection').style.display = 'block';
+                }
+            });
+        }
+        
+        // Load user investments
+        function loadUserInvestments(userId) {
+            const investmentsRef = database.ref('investments/' + userId);
+            const tableBody = document.getElementById('userInvestmentsTable');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading investments...</td></tr>';
+            
+            investmentsRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No investments found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach((investmentSnapshot) => {
+                    const investment = investmentSnapshot.val();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>₹${investment.amount}</td>
+                        <td>₹${investment.expectedProfit}</td>
+                        <td><span class="status status-${investment.status}">${investment.status}</span></td>
+                        <td>${new Date(investment.timestamp).toLocaleDateString()}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Load user withdrawals
+        function loadUserWithdrawals(userId) {
+            const withdrawalsRef = database.ref('withdrawals/' + userId);
+            const tableBody = document.getElementById('userWithdrawalsTable');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading withdrawals...</td></tr>';
+            
+            withdrawalsRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No withdrawals found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach((withdrawalSnapshot) => {
+                    const withdrawal = withdrawalSnapshot.val();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>₹${withdrawal.amount}</td>
+                        <td>${withdrawal.method}</td>
+                        <td><span class="status status-${withdrawal.status}">${withdrawal.status}</span></td>
+                        <td>${new Date(withdrawal.timestamp).toLocaleDateString()}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Back to users list
+        function backToUsersList() {
+            document.getElementById('userDetailsSection').style.display = 'none';
+            document.getElementById('usersTable').closest('.data-section').style.display = 'block';
+        }
+        
+        // Login as user
+        function loginAsUser() {
+            if (currentViewingUserId) {
+                // Store user credentials in session storage
+                const userRef = database.ref('users/' + currentViewingUserId);
+                userRef.once('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        const user = snapshot.val();
+                        sessionStorage.setItem('loginAsUser', 'true');
+                        sessionStorage.setItem('userCredentials', JSON.stringify({
+                            userId: currentViewingUserId,
+                            password: user.credentials?.password || ''
+                        }));
+                        
+                        // Redirect to main site
+                        window.open('/', '_blank');
+                    }
+                });
+            }
+        }
+        
+        // Load investments data
+        function loadInvestmentsData() {
+            const investmentsRef = database.ref('investments');
+            const tableBody = document.getElementById('investmentsTable');
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading investments...</td></tr>';
+            
+            investmentsRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No investments found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach((userSnapshot) => {
+                    userSnapshot.forEach((investmentSnapshot) => {
+                        const investment = investmentSnapshot.val();
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${userSnapshot.key}</td>
+                            <td>₹${investment.amount}</td>
+                            <td>₹${investment.expectedProfit}</td>
+                            <td><span class="status status-${investment.status}">${investment.status}</span></td>
+                            <td>${new Date(investment.timestamp).toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-success" onclick="approveInvestment('${userSnapshot.key}', '${investmentSnapshot.key}')">Approve</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                });
+            });
+        }
+        
+        // Load plans data
+        function loadPlansData() {
+            const plansRef = database.ref('investmentPlans');
+            const tableBody = document.getElementById('plansTable');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading plans...</td></tr>';
+            
+            plansRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No plans found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach((planSnapshot) => {
+                    const plan = planSnapshot.val();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${plan.name}</td>
+                        <td>₹${plan.amount}</td>
+                        <td>₹${plan.profit}</td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editPlan('${planSnapshot.key}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deletePlan('${planSnapshot.key}')">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Load withdrawals data
+        function loadWithdrawalsData() {
+            const withdrawalsRef = database.ref('withdrawals');
+            const tableBody = document.getElementById('withdrawalsTable');
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading withdrawals...</td></tr>';
+            
+            withdrawalsRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No withdrawals found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach((userSnapshot) => {
+                    userSnapshot.forEach((withdrawalSnapshot) => {
+                        const withdrawal = withdrawalSnapshot.val();
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${userSnapshot.key}</td>
+                            <td>₹${withdrawal.amount}</td>
+                            <td>${withdrawal.method}</td>
+                            <td><span class="status status-${withdrawal.status}">${withdrawal.status}</span></td>
+                            <td>${new Date(withdrawal.timestamp).toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-success" onclick="processWithdrawal('${userSnapshot.key}', '${withdrawalSnapshot.key}')">Process</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                });
+            });
+        }
+        
+        // Load configuration data
+        function loadConfigData() {
+            const configRef = database.ref('websiteConfig');
+            const tableBody = document.getElementById('configTable');
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Loading configuration...</td></tr>';
+            
+            configRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No configuration found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach((configSnapshot) => {
+                    const config = configSnapshot.val();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${configSnapshot.key}</td>
+                        <td>${typeof config === 'object' ? JSON.stringify(config) : config}</td>
+                        <td>${config.updatedAt ? new Date(config.updatedAt).toLocaleString() : 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Load activities data
+        function loadActivitiesData() {
+            const activitiesRef = database.ref('userActivities');
+            const tableBody = document.getElementById('allActivitiesTable');
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading activities...</td></tr>';
+            
+            activitiesRef.once('value', (snapshot) => {
+                tableBody.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No activities found</td></tr>';
+                    return;
+                }
+                
+                const activities = [];
+                snapshot.forEach((userSnapshot) => {
+                    userSnapshot.forEach((activitySnapshot) => {
+                        activities.push({
+                            userId: userSnapshot.key,
+                            ...activitySnapshot.val()
+                        });
+                    });
+                });
+                
+                // Sort by timestamp (newest first)
+                activities.sort((a, b) => b.timestamp - a.timestamp);
+                
+                // Display all activities
+                activities.forEach(activity => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${activity.userId}</td>
+                        <td>${activity.type}</td>
+                        <td>${JSON.stringify(activity.details || {})}</td>
+                        <td>${new Date(activity.timestamp).toLocaleString()}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            });
+        }
+        
+        // Show add user modal
+        function showAddUserModal() {
+            document.getElementById('newUserMobile').value = '';
+            document.getElementById('newUserId').value = '';
+            document.getElementById('newUserPassword').value = '';
+            document.getElementById('addUserModal').style.display = 'flex';
+        }
+        
+        // Generate user credentials when mobile number is entered
+        document.getElementById('newUserMobile').addEventListener('input', function() {
+            const mobileNumber = this.value;
+            if (mobileNumber.length === 10) {
+                document.getElementById('newUserId').value = `agentinvest${mobileNumber.slice(6)}`;
+                document.getElementById('newUserPassword').value = `mypass${mobileNumber.slice(6)}`;
+            }
+        });
+        
+        // Add new user
+        function addNewUser() {
+            const mobileNumber = document.getElementById('newUserMobile').value;
+            const userId = document.getElementById('newUserId').value;
+            const password = document.getElementById('newUserPassword').value;
+            
+            if (mobileNumber.length !== 10) {
+                alert('Please enter a valid 10-digit mobile number');
+                return;
+            }
+            
+            const userRef = database.ref('users/' + userId);
+            userRef.set({
+                mobileNumber: mobileNumber,
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                credentials: {
+                    userId: userId,
+                    password: password
+                }
+            })
+            .then(() => {
+                alert('User created successfully!');
+                closeModal('addUserModal');
+                loadUsersData();
+                
+                // Log the activity
+                const activityRef = database.ref('userActivities/' + userId + '/' + Date.now());
+                activityRef.set({
+                    type: "user_created",
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    details: {
+                        by: "admin",
+                        mobileNumber: mobileNumber
+                    }
+                });
+            })
+            .catch(error => {
+                alert('Error creating user: ' + error.message);
+            });
+        }
+        
+        // Show add plan modal
+        function showAddPlanModal() {
+            currentEditingPlanId = null;
+            document.getElementById('planModalTitle').textContent = 'Add New Investment Plan';
+            document.getElementById('planName').value = '';
+            document.getElementById('planAmount').value = '';
+            document.getElementById('planProfit').value = '';
+            document.getElementById('planModal').style.display = 'flex';
+        }
+        
+        // Edit plan
+        function editPlan(planId) {
+            currentEditingPlanId = planId;
+            const planRef = database.ref('investmentPlans/' + planId);
+            
+            planRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const plan = snapshot.val();
+                    document.getElementById('planModalTitle').textContent = 'Edit Investment Plan';
+                    document.getElementById('planName').value = plan.name;
+                    document.getElementById('planAmount').value = plan.amount;
+                    document.getElementById('planProfit').value = plan.profit;
+                    document.getElementById('planModal').style.display = 'flex';
+                }
+            });
+        }
+        
+        // Save plan (add or edit)
+        function savePlan() {
+            const planName = document.getElementById('planName').value;
+            const planAmount = document.getElementById('planAmount').value;
+            const planProfit = document.getElementById('planProfit').value;
+            
+            if (!planName || !planAmount || !planProfit) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            let planRef;
+            if (currentEditingPlanId) {
+                // Editing existing plan
+                planRef = database.ref('investmentPlans/' + currentEditingPlanId);
+            } else {
+                // Adding new plan
+                planRef = database.ref('investmentPlans').push();
+            }
+            
+            planRef.set({
+                name: planName,
+                amount: planAmount,
+                profit: planProfit,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                alert(`Investment plan ${currentEditingPlanId ? 'updated' : 'added'} successfully!`);
+                closeModal('planModal');
+                loadPlansData();
+            })
+            .catch(error => {
+                alert(`Error ${currentEditingPlanId ? 'updating' : 'adding'} plan: ` + error.message);
+            });
+        }
+        
+        // Show QR config modal
+        function showQrConfigModal() {
+            const configRef = database.ref('websiteConfig/qrCode');
+            configRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    document.getElementById('qrCodeUrl').value = snapshot.val().url || '';
+                    document.getElementById('qrCodeDescription').value = snapshot.val().description || '';
+                } else {
+                    document.getElementById('qrCodeUrl').value = '';
+                    document.getElementById('qrCodeDescription').value = '';
+                }
+                document.getElementById('qrConfigModal').style.display = 'flex';
+            });
+        }
+        
+        // Update QR code
+        function updateQrCode() {
+            const qrCodeUrl = document.getElementById('qrCodeUrl').value;
+            const qrCodeDescription = document.getElementById('qrCodeDescription').value;
+            
+            const configRef = database.ref('websiteConfig/qrCode');
+            configRef.set({
+                url: qrCodeUrl,
+                description: qrCodeDescription,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                alert('QR code updated successfully!');
+                closeModal('qrConfigModal');
+                loadConfigData();
+            })
+            .catch(error => {
+                alert('Error updating QR code: ' + error.message);
+            });
+        }
+        
+        // Show WhatsApp config modal
+        function showWhatsappConfigModal() {
+            const configRef = database.ref('websiteConfig/whatsapp');
+            configRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    document.getElementById('whatsappDeposit').value = snapshot.val().deposit || '';
+                    document.getElementById('whatsappWithdrawal').value = snapshot.val().withdrawal || '';
+                    document.getElementById('whatsappSupport').value = snapshot.val().support || '';
+                } else {
+                    document.getElementById('whatsappDeposit').value = '';
+                    document.getElementById('whatsappWithdrawal').value = '';
+                    document.getElementById('whatsappSupport').value = '';
+                }
+                document.getElementById('whatsappConfigModal').style.display = 'flex';
+            });
+        }
+        
+        // Update WhatsApp links
+        function updateWhatsappLinks() {
+            const whatsappDeposit = document.getElementById('whatsappDeposit').value;
+            const whatsappWithdrawal = document.getElementById('whatsappWithdrawal').value;
+            const whatsappSupport = document.getElementById('whatsappSupport').value;
+            
+            const configRef = database.ref('websiteConfig/whatsapp');
+            configRef.set({
+                deposit: whatsappDeposit,
+                withdrawal: whatsappWithdrawal,
+                support: whatsappSupport,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                alert('WhatsApp links updated successfully!');
+                closeModal('whatsappConfigModal');
+                loadConfigData();
+            })
+            .catch(error => {
+                alert('Error updating WhatsApp links: ' + error.message);
+            });
+        }
+        
+        // Show tax config modal
+        function showTaxConfigModal() {
+            const configRef = database.ref('websiteConfig/tax');
+            configRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    document.getElementById('taxPercentage').value = snapshot.val().percentage || '';
+                } else {
+                    document.getElementById('taxPercentage').value = '6';
+                }
+                document.getElementById('taxConfigModal').style.display = 'flex';
+            });
+        }
+        
+        // Update tax settings
+        function updateTaxSettings() {
+            const taxPercentage = document.getElementById('taxPercentage').value;
+            
+            if (!taxPercentage || taxPercentage < 0 || taxPercentage > 100) {
+                alert('Please enter a valid tax percentage between 0 and 100');
+                return;
+            }
+            
+            const configRef = database.ref('websiteConfig/tax');
+            configRef.set({
+                percentage: taxPercentage,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                alert('Tax settings updated successfully!');
+                closeModal('taxConfigModal');
+                loadConfigData();
+            })
+            .catch(error => {
+                alert('Error updating tax settings: ' + error.message);
+            });
+        }
+        
+        // Show general config modal
+        function showGeneralConfigModal() {
+            const configRef = database.ref('websiteConfig/general');
+            configRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const generalConfig = snapshot.val();
+                    document.getElementById('websiteName').value = generalConfig.websiteName || 'BitInvest Pro';
+                    document.getElementById('primaryColor').value = generalConfig.primaryColor || '#4cc2ff';
+                    document.getElementById('secondaryColor').value = generalConfig.secondaryColor || '#f7931a';
+                    
+                    // Update previews
+                    document.getElementById('primaryColorPreview').style.backgroundColor = generalConfig.primaryColor || '#4cc2ff';
+                    document.getElementById('secondaryColorPreview').style.backgroundColor = generalConfig.secondaryColor || '#f7931a';
+                    document.getElementById('primaryColorValue').textContent = generalConfig.primaryColor || '#4cc2ff';
+                    document.getElementById('secondaryColorValue').textContent = generalConfig.secondaryColor || '#f7931a';
+                } else {
+                    document.getElementById('websiteName').value = 'BitInvest Pro';
+                    document.getElementById('primaryColor').value = '#4cc2ff';
+                    document.getElementById('secondaryColor').value = '#f7931a';
+                    
+                    // Update previews
+                    document.getElementById('primaryColorPreview').style.backgroundColor = '#4cc2ff';
+                    document.getElementById('secondaryColorPreview').style.backgroundColor = '#f7931a';
+                    document.getElementById('primaryColorValue').textContent = '#4cc2ff';
+                    document.getElementById('secondaryColorValue').textContent = '#f7931a';
+                }
+                document.getElementById('generalConfigModal').style.display = 'flex';
+            });
+            
+            // Add event listeners for color pickers
+            document.getElementById('primaryColor').addEventListener('input', function() {
+                document.getElementById('primaryColorPreview').style.backgroundColor = this.value;
+                document.getElementById('primaryColorValue').textContent = this.value;
+            });
+            
+            document.getElementById('secondaryColor').addEventListener('input', function() {
+                document.getElementById('secondaryColorPreview').style.backgroundColor = this.value;
+                document.getElementById('secondaryColorValue').textContent = this.value;
+            });
+        }
+        
+        // Update general settings
+        function updateGeneralSettings() {
+            const websiteName = document.getElementById('websiteName').value;
+            const primaryColor = document.getElementById('primaryColor').value;
+            const secondaryColor = document.getElementById('secondaryColor').value;
+            
+            const configRef = database.ref('websiteConfig/general');
+            configRef.set({
+                websiteName: websiteName,
+                primaryColor: primaryColor,
+                secondaryColor: secondaryColor,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                alert('General settings updated successfully!');
+                closeModal('generalConfigModal');
+                loadConfigData();
+            })
+            .catch(error => {
+                alert('Error updating general settings: ' + error.message);
+            });
+        }
+        
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Delete user
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete user ' + userId + '?')) {
+                const userRef = database.ref('users/' + userId);
+                userRef.remove()
+                    .then(() => {
+                        alert('User deleted successfully!');
+                        loadUsersData();
+                    })
+                    .catch(error => {
+                        alert('Error deleting user: ' + error.message);
+                    });
+            }
+        }
+        
+        // Delete plan
+        function deletePlan(planId) {
+            if (confirm('Are you sure you want to delete this plan?')) {
+                const planRef = database.ref('investmentPlans/' + planId);
+                planRef.remove()
+                    .then(() => {
+                        alert('Plan deleted successfully!');
+                        loadPlansData();
+                    })
+                    .catch(error => {
+                        alert('Error deleting plan: ' + error.message);
+                    });
+            }
+        }
+        
+        // Approve investment
+        function approveInvestment(userId, investmentId) {
+            const investmentRef = database.ref('investments/' + userId + '/' + investmentId);
+            investmentRef.update({ status: 'success' })
+                .then(() => {
+                    alert('Investment approved successfully!');
+                    loadInvestmentsData();
+                })
+                .catch(error => {
+                    alert('Error approving investment: ' + error.message);
+                });
+        }
+        
+        // Process withdrawal
+        function processWithdrawal(userId, withdrawalId) {
+            const withdrawalRef = database.ref('withdrawals/' + userId + '/' + withdrawalId);
+            withdrawalRef.update({ status: 'processed' })
+                .then(() => {
+                    alert('Withdrawal processed successfully!');
+                    loadWithdrawalsData();
+                })
+                .catch(error => {
+                    alert('Error processing withdrawal: ' + error.message);
+                });
+        }
+        
+        // Initialize admin panel
+        checkAdminLogin();
+        
+        // Update time every minute
+        setInterval(() => {
+            if (document.getElementById('currentTime')) {
+                document.getElementById('currentTime').textContent = new Date().toLocaleString();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
